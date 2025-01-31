@@ -32,7 +32,7 @@ function startBot(message) {
 
 startBot();
 
-const currentVersion = '1.0.8';
+const currentVersion = '1.0.9';
 let isApiEnabled = true; // Flag to track if API is enabled
 
 async function checkForUpdates() {
