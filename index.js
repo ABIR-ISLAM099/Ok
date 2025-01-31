@@ -1,18 +1,23 @@
 console.clear();
 const { spawn } = require("child_process");
 const chalk = require('chalk');
-const fs = require('fs-extra')
+const fs = require('fs-extra');
 const path = require('path');
+const axios = require('axios');
+const semver = require('semver');
+const readline = require('readline');
+const { exec } = require('child_process');
 
 function startBot(message) {
     (message) ? console.info(chalk.blue(message.toUpperCase())) : "";
 
-  const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "--no-warnings", "main.js"], {
+    const child = spawn("node", ["--trace-warnings", "--async-stack-traces", "--no-warnings", "main.js"], {
         cwd: __dirname,
         stdio: "inherit",
         shell: true
     });
-  child.on("close", (codeExit) => {
+
+    child.on("close", (codeExit) => {
         if (codeExit != 0 || global.countRestart && global.countRestart < 5) {
             startBot("restarting server");
             global.countRestart += 1;
@@ -20,8 +25,94 @@ function startBot(message) {
         } else return;
     });
 
-  child.on("error", function(error) {
-    console.error("an error occurred : " + JSON.stringify(error));
-  });
-};
+    child.on("error", function(error) {
+        console.error("an error occurred : " + JSON.stringify(error));
+    });
+}
+
 startBot();
+
+const currentVersion = '1.0.7';
+let isApiEnabled = true; // Flag to track if API is enabled
+
+async function checkForUpdates() {
+    try {
+        const response = await axios.get('https://raw.githubusercontent.com/ABIR-ISLAM099/Ok/main/package.json');
+        const data = response.data;
+        const latestVersion = data.version;
+
+        if (semver.gt(latestVersion, currentVersion)) {
+            console.log('নতুন আপডেট পাওয়া গেছে!');
+            const userResponse = await askUserForUpdate(); // Ask user for update
+            if (userResponse === 'yes') {
+                isApiEnabled = false; // Disable API
+                await applyUpdate(); // Apply update
+                isApiEnabled = true; // Enable API after update
+            } else {
+                console.log('ব্যবহারকারী আপডেট করতে চাননি।');
+            }
+        } else if (semver.lt(latestVersion, currentVersion)) {
+            console.log('আপনার ভার্সন GitHub এর চেয়ে নতুন।');
+            isApiEnabled = false; // Disable API
+        } else {
+            console.log('আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।');
+            isApiEnabled = true; // Keep API enabled
+        }
+    } catch (error) {
+        console.error('আপডেট চেক করতে সমস্যা হয়েছে:', error.message);
+        isApiEnabled = false; // Disable API on error
+    }
+}
+
+function askUserForUpdate() {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    return new Promise((resolve) => {
+        rl.question('নতুন আপডেট পাওয়া গেছে! আপডেট করতে চান? (yes/no): ', (answer) => {
+            rl.close();
+            resolve(answer.toLowerCase());
+        });
+    });
+}
+
+async function applyUpdate() {
+    console.log('আপডেট প্রয়োগ করা হচ্ছে...');
+
+    try {
+        const repoUrl = 'https://github.com/ABIR-ISLAM099/Ok.git';
+        const repoDir = path.join(__dirname, 'temp-repo');
+
+        if (fs.existsSync(repoDir)) {
+            await executeCommand(`git -C ${repoDir} pull`);
+        } else {
+            await executeCommand(`git clone ${repoUrl} ${repoDir}`);
+        }
+
+        await executeCommand(`cp -r ${repoDir}/* ${__dirname}`);
+
+        await executeCommand(`rm -rf ${repoDir}`);
+
+        console.log('আপডেট সফলভাবে প্রয়োগ করা হয়েছে।');
+    } catch (error) {
+        console.error('আপডেট প্রয়োগ করতে সমস্যা হয়েছে:', error.message);
+    }
+}
+
+function executeCommand(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(stdout);
+            }
+        });
+    });
+}
+
+setInterval(checkForUpdates, 5 * 60 * 1000);
+
+checkForUpdates();
