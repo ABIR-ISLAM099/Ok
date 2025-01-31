@@ -1,6 +1,6 @@
 {
   "name": "ryuko",
-  "version": "5.0.4",
+  "version": "1.0.8",
   "description": "simple facebook messenger bot",
   "main": "main/execute/main.js",
   "scripts": {
