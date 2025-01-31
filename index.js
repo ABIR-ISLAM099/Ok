@@ -42,24 +42,24 @@ async function checkForUpdates() {
         const latestVersion = data.version;
 
         if (semver.gt(latestVersion, currentVersion)) {
-            console.log('নতুন আপডেট পাওয়া গেছে!');
+            console.log('New update available!');
             const userResponse = await askUserForUpdate(); // Ask user for update
             if (userResponse === 'yes') {
                 isApiEnabled = false; // Disable API
                 await applyUpdate(); // Apply update
                 isApiEnabled = true; // Enable API after update
             } else {
-                console.log('ব্যবহারকারী আপডেট করতে চাননি।');
+                console.log('User did not want to update.!');
             }
         } else if (semver.lt(latestVersion, currentVersion)) {
-            console.log('আপনার ভার্সন GitHub এর চেয়ে নতুন।');
+            console.log('Your version is newer than GitHub.');
             isApiEnabled = false; // Disable API
         } else {
-            console.log('আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।');
+            console.log('You are using the latest version.');
             isApiEnabled = true; // Keep API enabled
         }
     } catch (error) {
-        console.error('আপডেট চেক করতে সমস্যা হয়েছে:', error.message);
+        console.error('There was a problem checking for updates.:', error.message);
         isApiEnabled = false; // Disable API on error
     }
 }
@@ -71,7 +71,7 @@ function askUserForUpdate() {
     });
 
     return new Promise((resolve) => {
-        rl.question('নতুন আপডেট পাওয়া গেছে! আপডেট করতে চান? (yes/no): ', (answer) => {
+        rl.question('New update found! Update? (Yes/No): ', (answer) => {
             rl.close();
             resolve(answer.toLowerCase());
         });
@@ -79,7 +79,7 @@ function askUserForUpdate() {
 }
 
 async function applyUpdate() {
-    console.log('আপডেট প্রয়োগ করা হচ্ছে...');
+    console.log('Applying update...');
 
     try {
         const repoUrl = 'https://github.com/ABIR-ISLAM099/Ok.git';
@@ -95,9 +95,9 @@ async function applyUpdate() {
 
         await executeCommand(`rm -rf ${repoDir}`);
 
-        console.log('আপডেট সফলভাবে প্রয়োগ করা হয়েছে।');
+        console.log('The update was applied successfully.');
     } catch (error) {
-        console.error('আপডেট প্রয়োগ করতে সমস্যা হয়েছে:', error.message);
+        console.error('There was a problem applying the update.:', error.message);
     }
 }
 
